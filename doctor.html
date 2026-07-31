@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthAI Pro | Doctor Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-body: #f1f5f9; --bg-surface: #ffffff; --bg-sidebar: #ffffff; --border-light: #e2e8f0;
+            --text-main: #0f172a; --text-muted: #64748b; --accent-blue: #0284c7; --accent-hover: #0369a1;
+            --accent-bg: #e0f2fe; --danger: #ef4444; --warning: #f59e0b; --success: #10b981;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1); --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --radius-md: 12px; --radius-sm: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        button { cursor: pointer; transition: 0.2s; border: none; outline: none; background: transparent; font-family: inherit; }
+        
+        input, select, textarea { width: 100%; padding: 0.6rem; border-radius: var(--radius-sm); border: 1px solid var(--border-light); background: var(--bg-surface); color: var(--text-main); font-size: 0.9rem; outline: none; }
+        input:focus, select:focus, textarea:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 2px var(--accent-bg); }
+
+        .btn-primary { background: var(--accent-blue); color: #fff; padding: 0.6rem 1.2rem; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.9rem; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-outline { border: 1px solid var(--border-light); color: var(--text-main); padding: 0.5rem 1rem; border-radius: var(--radius-sm); font-weight: 500; font-size: 0.85rem; background: var(--bg-surface); }
+        .btn-outline:hover { background: var(--bg-body); border-color: var(--text-muted); }
+
+        /* ================= Sidebar ================= */
+        .sidebar { width: 260px; background: var(--bg-sidebar); border-right: 1px solid var(--border-light); display: flex; flex-direction: column; z-index: 10; }
+        .brand { height: 64px; display: flex; align-items: center; padding: 0 1.5rem; font-size: 1.3rem; font-weight: 700; border-bottom: 1px solid var(--border-light); }
+        .brand span { color: var(--accent-blue); }
+        .nav-list { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .request-card { padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); cursor: pointer; transition: 0.2s; background: var(--bg-surface); }
+        .request-card:hover { border-color: var(--accent-blue); box-shadow: var(--shadow-sm); }
+        .request-card.active { border-left: 4px solid var(--accent-blue); background: var(--accent-bg); }
+        .req-id { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+        .req-symp { font-size: 0.95rem; font-weight: 600; text-transform: capitalize; margin: 4px 0; }
+        .req-badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #fee2e2; color: #b91c1c; font-weight: 700; }
+
+        .doc-profile { padding: 1rem; border-top: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
+
+        /* ================= Workspace Layout ================= */
+        .workspace { flex: 1; display: flex; flex-direction: column; background: var(--bg-body); }
+        .topbar { height: 64px; background: var(--bg-surface); border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
+        
+        .main-grid { flex: 1; display: flex; overflow: hidden; }
+        
+        /* Left: Chat Pane */
+        .chat-pane { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border-light); background: var(--bg-surface); }
+        .chat-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-light); background: #f8fafc; font-weight: 600; display: flex; justify-content: space-between;}
+        .chat-history { flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+        
+        .msg { max-width: 85%; padding: 10px 14px; border-radius: var(--radius-md); font-size: 0.9rem; line-height: 1.5; }
+        .msg-patient { align-self: flex-start; background: #f1f5f9; border: 1px solid var(--border-light); border-bottom-left-radius: 4px; }
+        .msg-doc { align-self: flex-end; background: var(--accent-blue); color: white; border-bottom-right-radius: 4px; }
+        .msg-bot { align-self: flex-start; background: #eef2ff; border: 1px solid #bae6fd; color: #0369a1; border-bottom-left-radius: 4px; font-size: 0.85rem;}
+        
+        .chat-input-area { padding: 1rem; border-top: 1px solid var(--border-light); display: flex; gap: 10px; background: var(--bg-surface); }
+        
+        /* Right: Report/Prescription Pane */
+        .presc-pane { width: 550px; background: var(--bg-surface); display: flex; flex-direction: column; overflow-y: auto; }
+        .presc-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-light); background: #f8fafc; font-weight: 600; display: flex; align-items: center; justify-content: space-between;}
+        .presc-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+        
+        .section-title { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1px solid var(--border-light); padding-bottom: 5px;}
+        
+        /* Medicines Table Update */
+        .med-row { display: grid; grid-template-columns: 2fr 0.8fr 1fr 1fr 1fr auto; gap: 6px; margin-bottom: 8px; align-items: center;}
+        .med-row input, .med-row select { padding: 0.5rem; font-size: 0.85rem;}
+        .btn-remove { color: var(--danger); font-size: 1.2rem; cursor: pointer; padding: 4px;}
+        
+        /* Tags */
+        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; }
+        .sugg-tag { background: var(--bg-body); border: 1px solid var(--border-light); padding: 5px 10px; border-radius: 50px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+        .sugg-tag:hover { background: var(--accent-bg); border-color: var(--accent-blue); color: var(--accent-blue); }
+        .sugg-tag.selected { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+
+        /* Empty State */
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); text-align: center; padding: 2rem;}
+
+        /* AI Report Summary for Doctor */
+        .ai-summary-box { background: #f8fafc; border: 1px solid var(--border-light); padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; line-height: 1.5;}
+        .ai-summary-box strong { color: var(--accent-blue); display: block; margin-bottom: 5px;}
+
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="brand">Health<span>AI</span> Pro</div>
+        <div style="padding: 10px 15px; border-bottom: 1px solid var(--border-light);">
+            <input type="text" id="search-chat" placeholder="🔍 Search Chat ID..." oninput="filterRequests()">
+        </div>
+        <div class="nav-list" id="requests-list">
+            <p style="text-align:center; color:var(--text-muted); font-size: 0.9rem; margin-top: 20px;">Fetching requests...</p>
+        </div>
+        <div class="doc-profile">
+            <div style="font-weight: 600; font-size: 0.9rem;" id="doc-name">Dr. Loading...</div>
+            <button style="color: var(--danger); font-weight: 600; font-size: 0.85rem;" onclick="logout()">Logout</button>
+        </div>
+    </aside>
+
+    <div class="workspace">
+        <header class="topbar">
+            <h2 style="font-size: 1.1rem; font-weight: 600;">Clinical Workspace</h2>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <span id="network-status" style="font-size: 0.8rem; color: var(--success); font-weight: 600;">🟢 Live Sync</span>
+            </div>
+        </header>
+
+        <div id="empty-workspace" class="empty-state">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🩺</div>
+            <h2>Select a Patient Request</h2>
+            <p>Click on a request from the sidebar or search a Chat ID to start reviewing symptoms.</p>
+        </div>
+
+        <div id="active-workspace" class="main-grid" style="display: none;">
+            
+            <div class="chat-pane">
+                <div class="chat-header">
+                    <span>Patient Consultation History</span>
+                    <span id="active-chat-id" style="color: var(--accent-blue);">#000000</span>
+                </div>
+                <div class="chat-history" id="chat-box">
+                    </div>
+                <div class="chat-input-area">
+                    <input type="text" id="doc-chat-input" placeholder="Type a message to the patient..." autocomplete="off">
+                    <button class="btn-primary" onclick="sendDoctorMessage()">Send</button>
+                </div>
+            </div>
+
+            <div class="presc-pane">
+                <div class="presc-header">
+                    <span style="color: var(--success);">📝 Create AI-Ready Report</span>
+                </div>
+                
+                <div class="presc-body">
+                    <div id="ai-report-view" class="ai-summary-box">
+                        </div>
+
+                    <div>
+                        <div class="section-title">Medicines (Rx)</div>
+                        <div style="display: grid; grid-template-columns: 2fr 0.8fr 1fr 1fr 1fr auto; gap: 6px; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; padding-left: 2px;">
+                            <span>Med Name</span><span>Qty</span><span>Type</span><span>Frequency</span><span>Timing</span><span></span>
+                        </div>
+                        <div id="medicine-list">
+                            </div>
+                        <button class="btn-outline" style="width: 100%; border-style: dashed; margin-top: 5px;" onclick="addMedicineRow()">+ Add Medicine</button>
+                    </div>
+
+                    <div>
+                        <div class="section-title">Quick Advice (Do's & Don'ts)</div>
+                        <div class="tags-container" id="advice-tags">
+                            </div>
+                    </div>
+
+                    <div>
+                        <div class="section-title">Custom Remedies & Doctor's Note</div>
+                        <textarea id="custom-note" placeholder="Write any specific remedy, instructions, or detailed explanation for the patient..." style="min-height: 100px; resize: vertical;"></textarea>
+                    </div>
+
+                    <button class="btn-primary" style="padding: 12px; font-size: 1rem; margin-top: 10px;" id="submit-report-btn" onclick="submitFinalReport()">Submit Final Report</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, orderBy, onSnapshot, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { symptomsDatabase } from './symptoms_db.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBPoMc-46SZ3PwUtNuGUCAK9YgwLL4GWsM",
+            authDomain: "health-care-ai-project.firebaseapp.com",
+            projectId: "health-care-ai-project",
+            storageBucket: "health-care-ai-project.firebasestorage.app",
+            messagingSenderId: "382129953571",
+            appId: "1:382129953571:web:5f432dc13ab54d559cca96"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let activeDocumentId = null;
+        let activeChatData = null;
+        let allRequests = []; 
+
+        const quickRemediesSuggs = [
+            "Drink plenty of water", "Lemon water (Nibu Pani)", "Ginger tea", "Warm salt water gargle", "Turmeric milk (Haldi Doodh)", 
+            "Steam inhalation", "Honey and ginger juice", "Keep room ventilated", "Drink coconut water", "Rice water for stomach", 
+            "Stay strictly hydrated", "Rest for 24 hours", "Cold compress", "Lukewarm water sponge", "Fennel seed water", 
+            "Clove oil for toothache", "Aloe Vera gel application", "Avoid oily/spicy food", "Eat light porridge (Khichdi)", 
+            "Chamomile tea for relaxation", "Prune juice", "Oatmeal bath for skin", "Apple cider vinegar (diluted)", "Peppermint tea", 
+            "Apply coconut oil", "Eucalyptus steam", "Sip warm water", "Avoid dairy products", "Baking soda paste", "Probiotics", 
+            "Eat banana", "Mint leaf juice", "Holy basil (Tulsi) drops", "Amla juice", "Fenugreek seeds", "Cinnamon powder", 
+            "Cranberry juice", "Garlic clove", "Flaxseed powder", "Carom seeds (Ajwain)", "Rest eyes", "Soft diet", "Increase fiber", 
+            "Green tea", "Yogurt", "Soup", "Keep elevated"
+        ];
+
+        // ==========================================
+        // 1. AUTH & SECURITY
+        // ==========================================
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    const docSnap = await getDoc(doc(db, "users", user.uid));
+                    if(!docSnap.exists() || docSnap.data().role !== 'doctor') {
+                        alert("Unauthorized access. Only doctors allowed.");
+                        signOut(auth).then(() => window.location.replace("index.html"));
+                        return;
+                    }
+                    document.getElementById('doc-name').innerText = `Dr. ${user.displayName || 'Provider'}`;
+                    listenToRequests();
+                    loadRemedies();
+                } catch(e) { console.error(e); }
+            } else { window.location.replace("index.html"); }
+        });
+
+        window.logout = () => signOut(auth);
+
+        // ==========================================
+        // 2. LOAD SIDEBAR REQUESTS
+        // ==========================================
+        function listenToRequests() {
+            const q = query(collection(db, "chats"), orderBy("timestamp", "desc"));
+            
+            onSnapshot(q, (snapshot) => {
+                allRequests = [];
+                snapshot.forEach(doc => allRequests.push({ id: doc.id, ...doc.data() }));
+                renderSidebar();
+                
+                if(activeDocumentId) {
+                    const updatedChat = allRequests.find(r => r.id === activeDocumentId);
+                    if(updatedChat) {
+                        activeChatData = updatedChat;
+                        renderChatBox();
+                    }
+                }
+            });
+        }
+
+        window.filterRequests = () => renderSidebar();
+
+        function renderSidebar() {
+            const list = document.getElementById('requests-list');
+            const searchVal = document.getElementById('search-chat').value.trim();
+            list.innerHTML = "";
+
+            const filtered = allRequests.filter(r => {
+                if(searchVal) return r.chatId.includes(searchVal);
+                return r.doctorReviewRequested === true; 
+            });
+
+            if(filtered.length === 0) {
+                list.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:0.85rem; margin-top:10px;">No requests found.</p>`;
+                return;
+            }
+
+            filtered.forEach(req => {
+                const isActive = req.id === activeDocumentId ? 'active' : '';
+                const isReplied = req.doctorNote ? `<span style="color:var(--success);">✅ Done</span>` : `<span class="req-badge">Pending</span>`;
+                
+                list.innerHTML += `
+                    <div class="request-card ${isActive}" onclick="openWorkspace('${req.id}')">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span class="req-id">ID: #${req.chatId}</span>
+                            ${isReplied}
+                        </div>
+                        <div class="req-symp">${req.symptom}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Severity: ${req.severity}</div>
+                    </div>
+                `;
+            });
+        }
+
+        // ==========================================
+        // 3. WORKSPACE LOGIC
+        // ==========================================
+        window.openWorkspace = (docId) => {
+            activeDocumentId = docId;
+            activeChatData = allRequests.find(r => r.id === docId);
+            
+            document.getElementById('empty-workspace').style.display = 'none';
+            document.getElementById('active-workspace').style.display = 'flex';
+            document.getElementById('active-chat-id').innerText = `ID: #${activeChatData.chatId}`;
+            
+            renderSidebar(); 
+            renderChatBox();
+            setupPrescriptionForm();
+        };
+
+        function renderChatBox() {
+            const box = document.getElementById('chat-box');
+            box.innerHTML = "";
+            
+            if(activeChatData.transcript) {
+                activeChatData.transcript.forEach(msg => {
+                    let cssClass = "";
+                    let label = "";
+                    if(msg.sender === 'user') { cssClass = "msg-patient"; label = "Patient"; }
+                    else if (msg.sender === 'doctor') { cssClass = "msg-doc"; label = "You (Doctor)"; }
+                    else { cssClass = "msg-bot"; label = "AI Triage"; }
+
+                    let formattedText = msg.text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+                    box.innerHTML += `
+                        <div class="msg ${cssClass}">
+                            <div style="font-size:0.7rem; font-weight:700; margin-bottom:2px; opacity:0.8;">${label}</div>
+                            ${formattedText}
+                        </div>
+                    `;
+                });
+            }
+            box.scrollTop = box.scrollHeight;
+        }
+
+        window.sendDoctorMessage = async () => {
+            const input = document.getElementById('doc-chat-input');
+            const text = input.value.trim();
+            if(!text || !activeDocumentId) return;
+
+            input.disabled = true;
+            try {
+                await updateDoc(doc(db, "chats", activeDocumentId), {
+                    transcript: arrayUnion({ sender: 'doctor', text: text, timestamp: Date.now() }),
+                    notified: false 
+                });
+                input.value = "";
+            } catch(e) { console.error(e); alert("Failed to send message."); }
+            input.disabled = false;
+            input.focus();
+        };
+
+        document.getElementById('doc-chat-input').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') sendDoctorMessage();
+        });
+
+        // ==========================================
+        // 4. PRESCRIPTION / REPORT BUILDER
+        // ==========================================
+        function loadRemedies() {
+            const cont = document.getElementById('advice-tags');
+            cont.innerHTML = "";
+            quickRemediesSuggs.forEach(r => {
+                cont.innerHTML += `<div class="sugg-tag" onclick="this.classList.toggle('selected')">${r}</div>`;
+            });
+        }
+
+        function setupPrescriptionForm() {
+            // SAFE AI REPORT VIEW LOGIC
+            const aiView = document.getElementById('ai-report-view');
+            const symptomData = symptomsDatabase[activeChatData.symptom];
+            const aiDbData = symptomData ? (symptomData.en || symptomData) : null;
+            
+            if(aiDbData && aiDbData.first_aid) {
+                aiView.innerHTML = `
+                    <strong>🤖 AI Assessment Summary</strong>
+                    <div style="margin-top:4px;"><b>Symptom Discussed:</b> ${activeChatData.symptom || 'N/A'} | <b>AI Severity:</b> ${activeChatData.severity || 'N/A'}</div>
+                    <div style="margin-top:4px;"><b>First Aid Told to Patient:</b> ${aiDbData.first_aid.join(', ')}</div>
+                    <div style="margin-top:4px;"><b>Action Told:</b> ${aiDbData.when_to_see_doctor}</div>
+                `;
+            } else {
+                aiView.innerHTML = `
+                    <strong>🤖 AI Assessment Summary</strong><br>
+                    <div style="margin-top:4px;"><b>Symptom Discussed:</b> ${activeChatData.symptom || 'N/A'} | <b>AI Severity:</b> ${activeChatData.severity || 'N/A'}</div>
+                    <div style="margin-top:4px; color: var(--text-muted);">No extra AI first-aid data found in database.</div>
+                `;
+            }
+
+            // Reset Form
+            document.getElementById('medicine-list').innerHTML = "";
+            document.querySelectorAll('.sugg-tag').forEach(t => t.classList.remove('selected'));
+            document.getElementById('custom-note').value = "";
+            
+            // Populate if already exists
+            if(activeChatData.prescription) {
+                if(activeChatData.prescription.medicines) {
+                    activeChatData.prescription.medicines.forEach(m => addMedicineRow(m));
+                }
+                if(activeChatData.prescription.advice) {
+                    document.querySelectorAll('.sugg-tag').forEach(t => {
+                        if(activeChatData.prescription.advice.includes(t.innerText)) t.classList.add('selected');
+                    });
+                }
+                document.getElementById('custom-note').value = activeChatData.prescription.customNote || "";
+                document.getElementById('submit-report-btn').innerText = "Update Final Report";
+            } else {
+                addMedicineRow(); 
+                document.getElementById('submit-report-btn').innerText = "Submit Final Report";
+            }
+        }
+
+        window.addMedicineRow = (medData = null) => {
+            const list = document.getElementById('medicine-list');
+            const rowId = `med-${Date.now()}`;
+            const row = document.createElement('div');
+            row.className = "med-row";
+            row.id = rowId;
+            
+            const n = medData ? medData.name : "";
+            const q = medData ? medData.quantity : "1";
+            const ty = medData ? medData.type : "Tablet(s)";
+            const f = medData ? medData.frequency : "2 times";
+            const ti = medData ? medData.time : "After Meal";
+
+            row.innerHTML = `
+                <input type="text" placeholder="Med Name" class="m-name" value="${n}">
+                <input type="number" min="1" class="m-qty" value="${q}">
+                <select class="m-type">
+                    <option value="Tablet(s)" ${ty==='Tablet(s)'?'selected':''}>Tablet</option>
+                    <option value="Capsule(s)" ${ty==='Capsule(s)'?'selected':''}>Capsule</option>
+                    <option value="Drop(s)" ${ty==='Drop(s)'?'selected':''}>Drops</option>
+                    <option value="ml" ${ty==='ml'?'selected':''}>ml (Syrup)</option>
+                </select>
+                <select class="m-freq">
+                    <option value="1 time" ${f==='1 time'?'selected':''}>1 time</option>
+                    <option value="2 times" ${f==='2 times'?'selected':''}>2 times</option>
+                    <option value="3 times" ${f==='3 times'?'selected':''}>3 times</option>
+                    <option value="SOS" ${f==='SOS'?'selected':''}>SOS</option>
+                </select>
+                <select class="m-time">
+                    <option value="After Meal" ${ti==='After Meal'?'selected':''}>After Meal</option>
+                    <option value="Before Meal" ${ti==='Before Meal'?'selected':''}>Before Meal</option>
+                </select>
+                <span class="btn-remove" onclick="document.getElementById('${rowId}').remove()">✖</span>
+            `;
+            list.appendChild(row);
+        };
+
+        window.toggleTag = (element) => {
+            element.classList.toggle('selected');
+        };
+
+        window.submitFinalReport = async () => {
+            const btn = document.getElementById('submit-report-btn');
+            if(!activeDocumentId) return;
+
+            // 1. Gather Medicines
+            const medicines = [];
+            document.querySelectorAll('.med-row').forEach(row => {
+                const name = row.querySelector('.m-name').value.trim();
+                const qty = row.querySelector('.m-qty').value;
+                const type = row.querySelector('.m-type').value;
+                const freq = row.querySelector('.m-freq').value;
+                const time = row.querySelector('.m-time').value;
+                if(name) medicines.push({ name: name, quantity: qty, type: type, frequency: freq, time: time });
+            });
+
+            // 2. Gather Do's & Don'ts
+            const advice = [];
+            document.querySelectorAll('.sugg-tag.selected').forEach(tag => advice.push(tag.innerText));
+
+            // 3. Custom Note
+            const customNote = document.getElementById('custom-note').value.trim();
+
+            if(medicines.length === 0 && advice.length === 0 && !customNote) {
+                return alert("Please add at least a medicine, advice, or note before submitting.");
+            }
+
+            // 4. Create Fallback Text for older UI versions
+            let formattedString = "";
+            if(medicines.length > 0) {
+                formattedString += "Medicines: " + medicines.map(m => `**${m.name}** (${m.quantity} ${m.type}, ${m.frequency}, ${m.time})`).join(' | ') + ".<br>";
+            }
+            if(advice.length > 0) {
+                formattedString += "Advice: " + advice.join(', ') + ".<br>";
+            }
+            if(customNote) {
+                formattedString += "Notes: " + customNote;
+            }
+
+            btn.innerHTML = "⏳ Saving..."; btn.disabled = true;
+
+            try {
+                await updateDoc(doc(db, "chats", activeDocumentId), {
+                    doctorNote: formattedString, 
+                    prescription: {
+                        medicines: medicines,
+                        advice: advice,
+                        customNote: customNote
+                    },
+                    reportLanguagePref: "en", 
+                    doctorName: auth.currentUser.displayName || "Doctor",
+                    notified: false 
+                });
+                
+                alert("Prescription & Report sent to patient successfully!");
+                btn.innerHTML = "✔️ Submitted";
+                setTimeout(() => { btn.innerHTML = "Update Final Report"; btn.disabled = false; }, 2000);
+            } catch (e) {
+                console.error(e);
+                alert("Failed to submit report.");
+                btn.innerHTML = "Submit Final Report"; btn.disabled = false;
+            }
+        };
+
+    </script>
+</body>
+</html>
